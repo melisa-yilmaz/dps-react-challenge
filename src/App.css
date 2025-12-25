@@ -46,3 +46,18 @@
 .read-the-docs {
 	color: #888;
 }
+
+.address-row {
+	display: flex;
+	gap: 16px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+}
+
+.field input {
+	padding: 12px;
+	font-size: 14px;
+}
