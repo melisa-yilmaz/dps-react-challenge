@@ -93,7 +93,6 @@ export function AddressValidator() {
         
     useEffect(() => {
         if (mode !== "postalCode") return;
-        console.log("Mode is: ", mode);
 
         setLocality("");
         setLocalitySuggestions([]);
@@ -125,14 +124,11 @@ export function AddressValidator() {
           setLocalitySuggestions([]);
           setError(handleFetchError(error, 'localities'));
         });
-        console.log("Now in postal code: ", locality, postalCode); 
       }, [debouncedPostalCode, mode]);
 
 
     useEffect(() => {
-        console.log("Mode is: ", mode);
         if (mode !== "locality" || isSelectionMade) return;
-        console.log("Now in locality ");
 
         setPostalCodeOptions([]);
         setPostalCode("");
@@ -164,7 +160,6 @@ export function AddressValidator() {
             setLocalitySuggestions([]);
             setError(handleFetchError(error, 'localities'));
           });
-        console.log("Now in locality: ", locality, postalCode);   
     }, [debouncedLocality, isSelectionMade, mode]);
       
     const onSelectLocality = (locName: string) => {
@@ -177,7 +172,6 @@ export function AddressValidator() {
 
 
         fetchLocalities(locName, "", true).then((data) => {
-            console.log("fetching localities for selected locality now", data);
             if (data.length === 0) {
                 setPostalCodeOptions([]);
                 setPostalCode("");
@@ -202,8 +196,7 @@ export function AddressValidator() {
             setPostalCode("");
             setShowPostalCodeDropdown(false); 
             setError(handleFetchError(error, 'postalCodes'));
-            });
-        console.log("Now in selected locality: ", locality, postalCode);    
+            });  
     };
 
     const uniqueLocalities = localitySuggestions.reduce<Locality[]>((acc, loc) => {
