@@ -26,6 +26,8 @@ export function AddressValidator() {
     type InputMode = "idle" | "locality" | "postalCode";
     const [mode, setMode] = useState<InputMode>("idle");
 
+    const [showPostalCodeDropdown, setShowPostalCodeDropdown] = useState(false);
+
     const handleFetchError = (error: any, context: 'localities' | 'postalCodes'): string => {
         
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
@@ -56,6 +58,19 @@ export function AddressValidator() {
           ? "Unable to search cities. Please try again."
           : "Unable to fetch postal codes. Please try again.";
       };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+          const target = event.target as HTMLElement;
+          // Close postal code dropdown if clicking outside
+          if (showPostalCodeDropdown && !target.closest('.field')) {
+            setShowPostalCodeDropdown(false);
+          }
+        };
+      
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }, [showPostalCodeDropdown]);
 
     // Debounce for locality input
     useEffect(() => {
@@ -166,22 +181,26 @@ export function AddressValidator() {
             if (data.length === 0) {
                 setPostalCodeOptions([]);
                 setPostalCode("");
+                setShowPostalCodeDropdown(false);
                 setError("No postal codes found for this locality.");
 
             } else if (data.length === 1) {
                 setPostalCodeOptions([]);
                 setPostalCode(data[0].postalCode);
+                setShowPostalCodeDropdown(false);
                 setError("");
 
             } else {
                 const selectedCityData = data.filter(d => d.name == locName);
                 setPostalCodeOptions(selectedCityData.length > 1 ? selectedCityData.map(d => d.postalCode) : []);
                 setPostalCode(selectedCityData.length === 1 ? selectedCityData[0].postalCode : "") ;
+                setShowPostalCodeDropdown(true);
                 setError("");
             }
             }).catch((error) => {
             setPostalCodeOptions([]);
             setPostalCode("");
+            setShowPostalCodeDropdown(false); 
             setError(handleFetchError(error, 'postalCodes'));
             });
         console.log("Now in selected locality: ", locality, postalCode);    
@@ -196,7 +215,7 @@ export function AddressValidator() {
       
 
     return (
-    <div>
+        <div className="address-validator-card">
         <div className="title">
             <h2>German Address Validator</h2>
         </div>
@@ -231,39 +250,64 @@ export function AddressValidator() {
                     )}
             </div>
 
+            {/* Postal Code Field */}
             <div className='field'>
-                <label className="floating-label">
-                    {postalCodeOptions.length > 1 ? (
-                        <select
-                            value={postalCode}
-                            onChange={e => setPostalCode(e.target.value)
-                            }
-                            required
-                        >
-                            <option value="">Select Postal Code</option>
-                                {postalCodeOptions.map((code) => (
-                                    <option key={code} value={code}>
-                                    {code}
-                                    </option>
-                                ))}
-                        </select>
-                        ) : (
-                        <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={POSTAL_CODE_LENGTH}
-                        value={postalCode}
-                        onChange={(e) =>  {
-                            const value = e.target.value.replace(/\D/g, "").slice(0, POSTAL_CODE_LENGTH);
-                            setMode("postalCode");
-                            setPostalCode(value);
-                            setIsSelectionMade(false)}}
-                        required
-                        placeholder=' '
-                        />
-                    )}
-                    <span>Postal Code</span>
-                </label>
+            <label className="floating-label">
+                <input
+                type="text"
+                inputMode="numeric"
+                maxLength={POSTAL_CODE_LENGTH}
+                value={postalCode}
+                onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, POSTAL_CODE_LENGTH);
+                    setMode("postalCode");
+                    setPostalCode(value);
+                    setIsSelectionMade(false);
+                    setShowPostalCodeDropdown(false); // Hide dropdown when typing
+                }}
+                onFocus={() => {
+                    if (postalCodeOptions.length > 1) {
+                    setShowPostalCodeDropdown(true);
+                    }
+                }}
+                required
+                placeholder=' '
+                readOnly={postalCodeOptions.length > 1}
+                />
+                <span>Postal Code</span>
+            </label>
+
+     
+            {postalCodeOptions.length > 1 && showPostalCodeDropdown && (
+                <ul className='dropdown'>
+                {postalCodeOptions.map((code) => (
+                    <li
+                    className='dropdown-item'
+                    key={code}
+                    onClick={() => {
+                        setPostalCode(code);
+                        setShowPostalCodeDropdown(false);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setPostalCode(code);
+                        setShowPostalCodeDropdown(false);
+                        }
+                  
+                        if (e.key === 'Escape') {
+                        setShowPostalCodeDropdown(false);
+                        }
+                    }}
+                    tabIndex={0}
+                    role="option"
+                    aria-selected={postalCode === code}
+                    >
+                    {code}
+                    </li>
+                ))}
+                </ul>
+            )}
             </div>
         </div>
         <div className="error-container">

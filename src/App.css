@@ -1,12 +1,16 @@
 #root {
-	max-width: 1280px;
+	max-width: 700px;
 	margin: 0 auto;
 	padding: 2rem;
-	text-align: center;
-}
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+  }
+  
 
 .logo {
-	height: 6em;
+	height: 2em;
 	padding: 1.5em;
 	will-change: filter;
 	transition: filter 300ms;
@@ -47,16 +51,38 @@
 	color: #888;
 }
 
-.address-row {
-	display: flex;
-	gap: 16px;
-}
 
-.title {
-	padding: 50px 50px 20px 50px;
-	color: #ccc;
+.address-validator-card {
+	background: rgba(255, 255, 255, 0.05);
+	backdrop-filter: blur(10px);
+	border-radius: 16px;
+	padding: 5rem 5rem 7rem 5rem;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
+  
+
+  .title {
+	padding: 0 0 2rem 0;
+	text-align: center;
+  }
+  .title h2 {
+	color: #ccc;
+	font-size: 1.75rem;
+	font-weight: 600;
+	margin: 0;
+	letter-spacing: -0.5px;
+  }
+
+  .address-row {
+	display: flex;
+	gap: 1rem;
+	gap: 1rem;
+}
+
+
+  
 .field {
 	width: 250px;
 	position: relative;
@@ -128,6 +154,7 @@
 	transition: 0.4s ease;
 	padding: 0 3px;
   }
+  
   
 .floating-label input:focus + span,
 .floating-label input:not(:placeholder-shown) + span,
