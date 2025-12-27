@@ -4,14 +4,18 @@ export interface Locality {
     postalCode: string;
   }
 
-  export async function fetchLocalities(name: string, postalCode: string): Promise<Locality[]> {
+  export async function fetchLocalities(name: string, postalCode: string, isExactMatch: boolean): Promise<Locality[]> {
     try {
-        const nameRegex = name ? `^${name}` : "";
-        const postalCodeRegex = postalCode ? `^${postalCode}` : "";
+        console.log("In api call: ", name, postalCode, isExactMatch);
+        if (!isExactMatch) {
+            console.log("in regex ");
+            name =  `^${name}`;
+            postalCode = `^${postalCode}`;
+        }
 
         const url = new URL("https://openplzapi.org/de/Localities");
-        if (postalCodeRegex) url.searchParams.append("postalCode", postalCodeRegex);
-        if (nameRegex) url.searchParams.append("name", nameRegex);
+        if (postalCode) url.searchParams.append("postalCode", postalCode);
+        if (name) url.searchParams.append("name", name);
 
         console.log("Request URL:", url.toString()); 
 
