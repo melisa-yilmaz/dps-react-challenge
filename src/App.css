@@ -52,12 +52,75 @@
 	gap: 16px;
 }
 
+.title {
+	padding: 50px 50px 20px 50px;
+	color: #ccc;
+  }
 .field {
-	display: flex;
-	flex-direction: column;
-}
+	width: 250px;
+	position: relative;
+  }
+  .floating-label {
+	position: relative;
+	display: block;
+  }
 
-.field input {
-	padding: 12px;
+  
+  .floating-label input,
+  .floating-label select {
+	width: 100%;
+	padding: 14px 12px;
 	font-size: 14px;
-}
+	border: 1.5px solid #ccc;
+	border-radius: 6px;
+	background: transparent;
+	outline: none;
+  }
+  .dropdown {
+	position: absolute;
+	width: 100%;
+	margin-top: 0px;
+  
+	list-style: none;
+	padding: 0;
+	margin-bottom: 0;
+  
+	border: 1.5px solid #ccc;
+	border-radius: 6px;
+	background: white;
+  
+	max-height: 150px;
+	overflow-y: auto;
+  
+	z-index: 10;            /* stay above other elements */
+  }
+  
+  .floating-label input::placeholder {
+	color: transparent;
+  }
+
+
+  .floating-label span {
+	position: absolute;
+	left: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 15px;
+	color: #888;
+	pointer-events: none;
+	transition: 0.4s ease;
+	padding: 0 3px;
+  }
+  
+.floating-label input:focus + span,
+.floating-label input:not(:placeholder-shown) + span,
+.floating-label select + span,
+.floating-label select:focus + span {
+	top: -5.5px; 
+	transform: translateY(-50%);
+	font-size: 16px;
+	color:  #ccc;
+	left: 0px; 
+	padding: 0 6px;
+  }
+  

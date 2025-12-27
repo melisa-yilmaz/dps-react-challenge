@@ -13,7 +13,7 @@ export interface Locality {
         if (postalCodeRegex) url.searchParams.append("postalCode", postalCodeRegex);
         if (nameRegex) url.searchParams.append("name", nameRegex);
 
-        console.log("Request URL:", url.toString());  // Debug: print URL
+        console.log("Request URL:", url.toString()); 
 
         const response = await fetch(url.toString());
         if (!response.ok) {
