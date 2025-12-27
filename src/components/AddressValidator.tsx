@@ -3,6 +3,13 @@ import { useState, useEffect} from "react";
 import { fetchLocalities, Locality } from '../services/plzApi';
 
 
+
+
+const DEBOUNCE_DELAY = 1000;
+const MIN_LOCALITY_LENGTH = 3;
+const POSTAL_CODE_LENGTH = 5;
+
+
 export function AddressValidator() {
 
     const [locality, setLocality] = useState<string>("");
@@ -19,12 +26,42 @@ export function AddressValidator() {
     type InputMode = "idle" | "locality" | "postalCode";
     const [mode, setMode] = useState<InputMode>("idle");
 
+    const handleFetchError = (error: any, context: 'localities' | 'postalCodes'): string => {
+        
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          return "Network error. Please check your internet connection.";
+        }
+        
+        if (error.response) {
+          switch (error.response.status) {
+            case 404:
+              return context === 'localities' 
+                ? "No matching cities found." 
+                : "Postal code not found in the database.";
+            case 429:
+              return "Too many requests. Please wait a moment and try again.";
+            case 500:
+            case 503:
+              return "Service temporarily unavailable. Please try again later.";
+            default:
+              return `Server error (${error.response.status}). Please try again.`;
+          }
+        }
+        
+        if (error.code === 'ECONNABORTED') {
+          return "Request timed out. Please try again.";
+        }
+        
+        return context === 'localities'
+          ? "Unable to search cities. Please try again."
+          : "Unable to fetch postal codes. Please try again.";
+      };
 
     // Debounce for locality input
     useEffect(() => {
         const handler = setTimeout(() => {
           setDebouncedLocality(locality);
-        }, 1000);
+        }, DEBOUNCE_DELAY);
       
         return () => clearTimeout(handler);
       }, [locality]);
@@ -33,7 +70,7 @@ export function AddressValidator() {
       useEffect(() => {
         const handler = setTimeout(() => {
           setDebouncedPostalCode(postalCode);
-        }, 1000);
+        }, DEBOUNCE_DELAY);
       
         return () => clearTimeout(handler);
       }, [postalCode]);
@@ -47,28 +84,31 @@ export function AddressValidator() {
         setLocalitySuggestions([]);
         setError("");
 
+        if (debouncedPostalCode.trim().length > 0 && debouncedPostalCode.trim().length < 5) {
+            setError("Postal code must be 5 digits.");
+        } 
         if (debouncedPostalCode.trim().length < 5) {
             return;
         } 
     
         fetchLocalities("", debouncedPostalCode, true).then((data) => {
-          if (data.length === 0) {
-            setLocality("");
-            setLocalitySuggestions([]);
-            setError("Invalid postal code.");
-          } else if (data.length === 1) {
-            setLocality(data[0].name);
-            setLocalitySuggestions([]);
-            setError("");
-          } else {
-            setLocality("");
-            setLocalitySuggestions(data);
-            setError("");
-          }
-        }).catch(() => {
+            if (data.length === 0) {
+              setLocality("");
+              setLocalitySuggestions([]);
+              setError("Invalid postal code.");
+            } else if (data.length === 1) {
+              setLocality(data[0].name);
+              setLocalitySuggestions([]);
+              setError("");
+            } else {
+              setLocality("");
+              setLocalitySuggestions(data);
+              setError("");
+            }
+          }).catch((error) => {
           setLocality("");
           setLocalitySuggestions([]);
-          setError("Error fetching localities.");
+          setError(handleFetchError(error, 'localities'));
         });
         console.log("Now in postal code: ", locality, postalCode); 
       }, [debouncedPostalCode, mode]);
@@ -78,10 +118,18 @@ export function AddressValidator() {
         console.log("Mode is: ", mode);
         if (mode !== "locality" || isSelectionMade) return;
         console.log("Now in locality ");
+
         setPostalCodeOptions([]);
         setPostalCode("");
+        setError("");
+    
+        if (debouncedLocality.trim().length > 0 && /\d/.test(debouncedLocality)) {
+            setLocalitySuggestions([]);
+            setError("City names cannot contain numbers.");
+            return;
+        }
 
-        if (debouncedLocality.trim().length < 3) {
+        if (debouncedLocality.trim().length < MIN_LOCALITY_LENGTH) {
           setLocalitySuggestions([]);
           return;
         }
@@ -90,17 +138,16 @@ export function AddressValidator() {
           .then(data => {
             setLocalitySuggestions(data);
             if(data.length === 0) {
-                setError("No matching city found.");
+                setError("No matching city found. Please check your spelling.");
                 setPostalCodeOptions([]); 
                 setPostalCode("");
             } else {
                 setError("");
             }
-         
           })
-          .catch(() => {
+          .catch((error) => {
             setLocalitySuggestions([]);
-            setError("Error fetching localities.");
+            setError(handleFetchError(error, 'localities'));
           });
         console.log("Now in locality: ", locality, postalCode);   
     }, [debouncedLocality, isSelectionMade, mode]);
@@ -127,15 +174,15 @@ export function AddressValidator() {
                 setError("");
 
             } else {
-                setPostalCodeOptions(data.map(d => d.postalCode));
-                setPostalCode("");
+                const selectedCityData = data.filter(d => d.name == locName);
+                setPostalCodeOptions(selectedCityData.length > 1 ? selectedCityData.map(d => d.postalCode) : []);
+                setPostalCode(selectedCityData.length === 1 ? selectedCityData[0].postalCode : "") ;
                 setError("");
-                
             }
-            }).catch(() => {
+            }).catch((error) => {
             setPostalCodeOptions([]);
             setPostalCode("");
-            setError("Error fetching postal codes.");
+            setError(handleFetchError(error, 'postalCodes'));
             });
         console.log("Now in selected locality: ", locality, postalCode);    
     };
@@ -204,10 +251,10 @@ export function AddressValidator() {
                         <input
                         type="text"
                         inputMode="numeric"
-                        maxLength={5}
+                        maxLength={POSTAL_CODE_LENGTH}
                         value={postalCode}
                         onChange={(e) =>  {
-                            const value = e.target.value.replace(/\D/g, "").slice(0, 5);
+                            const value = e.target.value.replace(/\D/g, "").slice(0, POSTAL_CODE_LENGTH);
                             setMode("postalCode");
                             setPostalCode(value);
                             setIsSelectionMade(false)}}
