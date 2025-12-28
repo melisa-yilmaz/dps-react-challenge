@@ -109,10 +109,9 @@ export function AddressValidator() {
         if (debouncedPostalCode.trim().length < 5) {
             return;
         } 
-        
-        const start = performance.now();
+
         fetchLocalities("", debouncedPostalCode, true).then((data) => {
-            console.log(`API took ${performance.now() - start}ms`);
+
             if (data.length === 0) {
               setLocality("");
               setLocalitySuggestions([]);
@@ -126,7 +125,8 @@ export function AddressValidator() {
               setLocalitySuggestions(data);
               setError("");
             }
-          }).catch((error) => {
+          })
+        .catch((error) => {
           setLocality("");
           setLocalitySuggestions([]);
           setError(handleFetchError(error, 'localities'));
@@ -170,6 +170,7 @@ export function AddressValidator() {
             setLocalitySuggestions([]);
             setError(handleFetchError(error, 'localities'));
           });
+    
     }, [debouncedLocality, isSelectionMade, mode]);
       
     // Handle city selection from dropdown
@@ -208,7 +209,7 @@ export function AddressValidator() {
             setPostalCode("");
             setShowPostalCodeDropdown(false); 
             setError(handleFetchError(error, 'postalCodes'));
-            });  
+            });
     };
 
     // Remove duplicate city names from suggestions
@@ -317,7 +318,6 @@ export function AddressValidator() {
             )}
             </div>
         </div>
-
         {/* Error message display */}
         <div className="error-container">
             {error ? (

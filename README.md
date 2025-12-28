@@ -46,6 +46,12 @@ Please include a small artifact folder or a markdown section with:
 - Notes about what parts were AI-assisted
 - Any generated code snippets you modified or rejected
 
+## AI Assistance Disclosure
+
+This project was developed with partial AI assistance for learning and 
+optimization purposes. Full details of AI usage can be found in 
+[AI-ASSISTANCE.md](./AI-ASSISTANCE.md 
+
 This helps us understand your workflow and decision-making process, not to judge AI usage.
 
 Happy coding!
