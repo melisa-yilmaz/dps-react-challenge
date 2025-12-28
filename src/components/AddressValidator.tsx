@@ -2,9 +2,6 @@ import '../App.css';
 import { useState, useEffect} from "react";
 import { fetchLocalities, Locality } from '../services/plzApi';
 
-
-
-
 const DEBOUNCE_DELAY = 1000;
 const MIN_LOCALITY_LENGTH = 3;
 const POSTAL_CODE_LENGTH = 5;
@@ -12,28 +9,33 @@ const POSTAL_CODE_LENGTH = 5;
 
 export function AddressValidator() {
 
+    // City input state
     const [locality, setLocality] = useState<string>("");
     const [localitySuggestions, setLocalitySuggestions] = useState<Locality[]>([]);
     const [isSelectionMade, setIsSelectionMade] = useState(false);
     const [debouncedLocality, setDebouncedLocality] = useState(locality);
 
+    // Postal code input state
     const [postalCode, setPostalCode] = useState<string>("");
     const [postalCodeOptions, setPostalCodeOptions] = useState<string[]>([]);
     const [debouncedPostalCode, setDebouncedPostalCode] = useState(postalCode);
 
     const [error, setError] = useState("");
   
+    // Track which field user is currently editing
     type InputMode = "idle" | "locality" | "postalCode";
     const [mode, setMode] = useState<InputMode>("idle");
 
     const [showPostalCodeDropdown, setShowPostalCodeDropdown] = useState(false);
 
+    // Convert API errors to user-friendly messages
     const handleFetchError = (error: any, context: 'localities' | 'postalCodes'): string => {
-        
+        // Check for network/connection errors
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
           return "Network error. Please check your internet connection.";
         }
         
+        // Check for HTTP response errors
         if (error.response) {
           switch (error.response.status) {
             case 404:
@@ -50,6 +52,7 @@ export function AddressValidator() {
           }
         }
         
+        // Check for timeout errors
         if (error.code === 'ECONNABORTED') {
           return "Request timed out. Please try again.";
         }
@@ -59,6 +62,7 @@ export function AddressValidator() {
           : "Unable to fetch postal codes. Please try again.";
       };
 
+      // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
           const target = event.target as HTMLElement;
@@ -91,6 +95,7 @@ export function AddressValidator() {
       }, [postalCode]);
 
         
+    // Fetch cities when postal code is entered
     useEffect(() => {
         if (mode !== "postalCode") return;
 
@@ -104,8 +109,10 @@ export function AddressValidator() {
         if (debouncedPostalCode.trim().length < 5) {
             return;
         } 
-    
+        
+        const start = performance.now();
         fetchLocalities("", debouncedPostalCode, true).then((data) => {
+            console.log(`API took ${performance.now() - start}ms`);
             if (data.length === 0) {
               setLocality("");
               setLocalitySuggestions([]);
@@ -127,6 +134,7 @@ export function AddressValidator() {
       }, [debouncedPostalCode, mode]);
 
 
+    // Fetch city suggestions when typing city name
     useEffect(() => {
         if (mode !== "locality" || isSelectionMade) return;
 
@@ -145,8 +153,10 @@ export function AddressValidator() {
           return;
         }
       
+        const start = performance.now();
         fetchLocalities(debouncedLocality, "", false)
           .then(data => {
+            console.log(`API took ${performance.now() - start}ms`);
             setLocalitySuggestions(data);
             if(data.length === 0) {
                 setError("No matching city found. Please check your spelling.");
@@ -162,6 +172,7 @@ export function AddressValidator() {
           });
     }, [debouncedLocality, isSelectionMade, mode]);
       
+    // Handle city selection from dropdown
     const onSelectLocality = (locName: string) => {
         const loc = localitySuggestions.find(l => l.name === locName);
         if (!loc) return;
@@ -170,7 +181,7 @@ export function AddressValidator() {
         setLocalitySuggestions([]); 
         setIsSelectionMade(true);   
 
-
+        // Fetch postal codes for selected city
         fetchLocalities(locName, "", true).then((data) => {
             if (data.length === 0) {
                 setPostalCodeOptions([]);
@@ -185,6 +196,7 @@ export function AddressValidator() {
                 setError("");
 
             } else {
+
                 const selectedCityData = data.filter(d => d.name == locName);
                 setPostalCodeOptions(selectedCityData.length > 1 ? selectedCityData.map(d => d.postalCode) : []);
                 setPostalCode(selectedCityData.length === 1 ? selectedCityData[0].postalCode : "") ;
@@ -199,6 +211,7 @@ export function AddressValidator() {
             });  
     };
 
+    // Remove duplicate city names from suggestions
     const uniqueLocalities = localitySuggestions.reduce<Locality[]>((acc, loc) => {
         if (!acc.find(item => item.name === loc.name)) {
           acc.push(loc);
@@ -214,6 +227,7 @@ export function AddressValidator() {
         </div>
         
         <div className='address-row'>
+            {/* City input field */}
             <div className='field'>
                 <label className="floating-label">
                     <input
@@ -228,7 +242,7 @@ export function AddressValidator() {
                     />
                     <span>City</span>
                 </label>
-
+                {/* City suggestions dropdown */}
                 {uniqueLocalities.length > 0 && (
                     <ul className='dropdown' >
                         {uniqueLocalities.map(loc => (
@@ -256,7 +270,7 @@ export function AddressValidator() {
                     setMode("postalCode");
                     setPostalCode(value);
                     setIsSelectionMade(false);
-                    setShowPostalCodeDropdown(false); // Hide dropdown when typing
+                    setShowPostalCodeDropdown(false);
                 }}
                 onFocus={() => {
                     if (postalCodeOptions.length > 1) {
@@ -270,7 +284,7 @@ export function AddressValidator() {
                 <span>Postal Code</span>
             </label>
 
-     
+            {/* Postal code options dropdown */}
             {postalCodeOptions.length > 1 && showPostalCodeDropdown && (
                 <ul className='dropdown'>
                 {postalCodeOptions.map((code) => (
@@ -303,6 +317,8 @@ export function AddressValidator() {
             )}
             </div>
         </div>
+
+        {/* Error message display */}
         <div className="error-container">
             {error ? (
                 <p className="error-field">{error}</p>
